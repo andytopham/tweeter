@@ -18,8 +18,12 @@ class rssparser:
 		self.delay=4
 		self.rowcount = rows
 		self.scrolldelay = .2
-		self.myOled = oled.oled(4)
-		self.myOled.writerow(1,"RSS Testing....      ")
+		self.myOled = oled.oled(self.rowcount)
+		self.myOled.writerow(1,"RSS Testing....     ")
+		self.feeds = {	"RSS: BBC Tech News" : 'http://feeds.bbci.co.uk/news/technology/rss.xml',
+						"RSS: The Register" : 'http://www.theregister.co.uk/data_centre/cloud/headlines.atom',
+						"RSS: Jobsite" : 'http://www.jobsite.co.uk/cgi-bin/advsearch?rss_feed=1&skill_include=product%20development&location_include=Gloucestershire&location_within=20&search_currency_code=GBP&search_single_currency_flag=N&search_salary_type=A&daysback=7&scc=UK&compare_resolved=CO_GLOUCESTERSHIRE&compare_search=Gloucestershire'
+						}
 
 	def output(self,outputstring):
 		chars = '{:<20}'.format(outputstring[0:20])	
@@ -28,20 +32,11 @@ class rssparser:
 		self.myOled.writerow(2,chars)
 		chars = '{:<20}'.format(outputstring[40:60])		
 		self.myOled.writerow(3,chars)
-		self.titlerow()
 		
-	def titlerow(self):
-		chars = '{:<20}'.format("RSS: BBC Tech News")		
+	def titlerow(self,string):
+		chars = '{:<20}'.format(string)		
 		self.myOled.writerow(4,chars)
-				
-	def defaultlink(self):
-		d = feedparser.parse('http://feeds.bbci.co.uk/news/technology/rss.xml')
-		return(d)
-
-	def newlink(self):
-		d = feedparser.parse('http://www.theregister.co.uk/data_centre/cloud/headlines.atom')
-		return(d)
-
+						
 	def filtering(self,d):
 		z = []
 		j = 0
@@ -56,15 +51,38 @@ class rssparser:
 	def parsing(self):
 		parser = argparse.ArgumentParser(description='parser.py - display the contents of a rss feed on an oled')
 		parser.add_argument('-l', '--link', dest='link', action='store_true',
-						   help='process this link')
+						   help='the register rss')
+		parser.add_argument('-j', '--jobs', dest='joblink', action='store_true',
+						   help='jobsite rss')
 		args = parser.parse_args()
 		if args.link == True:
 			d = self.newlink()
+		elif args.joblink == True:
+			d = self.jobslink()
+		else:
+			d = self.defaultlink()
+		print d.feed.title
+		return(d,d.feed.title)
+	
+	def nonparsed(self,link):
+		if link == "Register":
+			d = self.newlink()
+		elif link == "Jobs":
+			d = self.jobslink()
 		else:
 			d = self.defaultlink()
 		print d.feed.title
 		return(d,d.feed.title)
 		
+	def dictread(self):
+		for feedname,feedaddress in self.feeds.iteritems():
+			print feedname
+			self.titlerow(feedname)
+			d = feedparser.parse(feedaddress)
+			filteredlist = self.filtering(d)
+			self.showentries(filteredlist,feedname,count=2)
+		return(0)
+			
 	def scrollingshowentries(self,filteredlist,feedtitle):
 		self.titlerow()
 		oldstring = ""
@@ -93,15 +111,10 @@ class rssparser:
 			start += 1
 			time.sleep(self.scrolldelay)
 		return(0)
-
-	def doitall(self):
-		d,feedtitle = self.parsing()
-		filteredlist = self.filtering(d)
-		self.showentries(filteredlist,feedtitle)
 	
-	def showentries(self,filteredlist,feedtitle):
+	def showentries(self,filteredlist,feedtitle,count=3):
 		oldstring = ""
-		for j,i in enumerate(filteredlist[0:3]):
+		for j,i in enumerate(filteredlist[0:count]):
 			start=0
 			divstart=0
 			print i.title
@@ -120,11 +133,6 @@ if __name__ == "__main__":
 #	Default level is warning, level=logging.INFO log lots, level=logging.DEBUG log everything
 	logging.warning(datetime.datetime.now().strftime('%d %b %H:%M')+". Running parser class as a standalone app")
 	myParser = rssparser(4)
-	myParser.doitall()
-#	while True:
-#		tweetlist = myTweeter.gettweet()
-#		for tweet in tweetlist:
-#			myTweeter.showtweet(tweet)
-#			myTweeter.showtweet4row(tweet)
-#			time.sleep(5*60)			
+	myParser.dictread()
+	
 

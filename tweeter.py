@@ -10,14 +10,14 @@ import time
 import logging
 import datetime
 import rssparser
-import twitterkeys
+import twitterkeys as keys
 
 class tweeter:
 	def __init__(self):
 		print "Tweeter tester"
 		self.myOled = oled.oled(4)
 		self.myOled.writerow(1,"Tweeter          ")
-		self.api = Twython(CONSUMER_KEY,CONSUMER_SECRET,ACCESS_KEY,ACCESS_SECRET) 
+		self.api = Twython(keys.CONSUMER_KEY,keys.CONSUMER_SECRET,keys.ACCESS_KEY,keys.ACCESS_SECRET) 
 		self.myParser = rssparser.rssparser()
 		
 	def sendtweet(self):
@@ -25,9 +25,12 @@ class tweeter:
 
 	def gettweet(self):
 		''' Return a single tweet. '''
-		user_timeline = self.api.get_home_timeline(count=3)
-		return(user_timeline)
-		
+		try:
+			user_timeline = self.api.get_home_timeline(count=3)
+			return(user_timeline)
+		except:
+			return(False)
+			
 	def showtweet(self, tweet):
 		''' Get the latest tweet and show it on the oled.'''
 #		user_timeline = self.api.get_home_timeline(count=1)
@@ -53,6 +56,12 @@ class tweeter:
 			return(shortened[10:])
 		else:
 			return(shortened)
+
+	def forceascii(self, incoming):
+		try:
+			return(incoming[0:126].decode('ascii','ignore'))
+		except:
+			return("Corrupted tweet")
 			
 	def showtweet4row(self, tweet):
 		''' Get the latest tweet and show it on the oled.'''
@@ -62,7 +71,8 @@ class tweeter:
 		screen_name = userarray['screen_name']
 		print "Sender: ",screen_name
 		print "Tweet text: ",incoming
-		stuff = self.processtweet(incoming)
+#		stuff = self.processtweet(incoming)
+		stuff = self.forceascii(incoming)
 		self.myOled.writerow(1,screen_name)
 		self.myOled.writerow(2,stuff[0:20])
 		self.myOled.writerow(3,stuff[20:40])
@@ -96,9 +106,10 @@ if __name__ == "__main__":
 	myTweeter = tweeter()
 	myParser = rssparser.rssparser()
 	while True:
-		myParser.doitall()	
+		myParser.fetchall()
 		tweetlist = myTweeter.gettweet()
-		for tweet in tweetlist:
-			myTweeter.showtweet4row(tweet)
-			time.sleep(5)
+		if tweetlist <> False:	
+			for tweet in tweetlist:
+				myTweeter.showtweet4row(tweet)
+				time.sleep(5)
 		
