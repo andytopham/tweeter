@@ -73,7 +73,12 @@ class rssparser:
 			d = self.defaultlink()
 		print d.feed.title
 		return(d,d.feed.title)
-		
+	
+	def timeonly(self):
+		stuff = time.strftime("%R")
+		self.myOled.writerow(2,stuff)
+		return(0)
+	
 	def dictread(self):
 		for feedname,feedaddress in self.feeds.iteritems():
 			print feedname
@@ -132,7 +137,10 @@ if __name__ == "__main__":
 						level=logging.INFO)	#filemode means that we do not append anymore
 #	Default level is warning, level=logging.INFO log lots, level=logging.DEBUG log everything
 	logging.warning(datetime.datetime.now().strftime('%d %b %H:%M')+". Running parser class as a standalone app")
-	myParser = rssparser(4)
-	myParser.dictread()
+	myParser = rssparser(2)
+	while True:
+		myParser.timeonly()
+		time.sleep(30)
+#	myParser.dictread()
 	
 

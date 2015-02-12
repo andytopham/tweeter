@@ -106,7 +106,7 @@ if __name__ == "__main__":
 	myTweeter = tweeter()
 	myParser = rssparser.rssparser()
 	while True:
-		myParser.fetchall()
+#		myParser.fetchall()
 		tweetlist = myTweeter.gettweet()
 		if tweetlist <> False:	
 			for tweet in tweetlist:
